@@ -3,6 +3,8 @@ package istio
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/kubernetes"
@@ -126,6 +128,22 @@ func deployIstio(context *service.ActionContext, performer actions.IstioPerforme
 
 type ProxyResetPostAction struct {
 	getIstioPerformer bootstrapIstioPerformer
+}
+
+type timedAction struct {
+	action service.Action
+}
+
+func (t *timedAction) Run(action *service.ActionContext) error {
+	start := time.Now()
+	err := t.action.Run(action)
+	elapsed := time.Since(start)
+	action.Logger.Infof("Action %s took: %s seconds", reflect.TypeOf(t.action), elapsed.String())
+	return err
+}
+
+func NewTimedProxyResetAction(getIstioPerformer bootstrapIstioPerformer) *timedAction {
+	return &timedAction{action: NewProxyResetPostAction(getIstioPerformer)}
 }
 
 func NewProxyResetPostAction(getIstioPerformer bootstrapIstioPerformer) *ProxyResetPostAction {

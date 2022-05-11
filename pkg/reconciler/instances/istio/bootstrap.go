@@ -45,7 +45,9 @@ func istioPerformerCreator(istioProxyReset proxy.IstioProxyReset, provider clien
 			return nil, err
 		}
 
-		return actions.NewDefaultIstioPerformer(resolver, istioProxyReset, provider), nil
+		performer := actions.NewDefaultIstioPerformer(resolver, istioProxyReset, provider)
+
+		return actions.NewTimedPerformer(performer), nil
 	}
 	return res
 }

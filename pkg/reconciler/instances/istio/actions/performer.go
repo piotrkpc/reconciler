@@ -518,3 +518,59 @@ func mapVersionToStruct(versionOutput []byte, targetVersion string, targetDirect
 		DataPlaneVersion: getVersionFromJSON("dataPlane", version),
 	}, nil
 }
+
+type timedPerformer struct {
+	performer IstioPerformer
+}
+
+func NewTimedPerformer(performer IstioPerformer) IstioPerformer {
+	return &timedPerformer{performer: performer}
+}
+
+func (t *timedPerformer) Install(kubeConfig, istioChart, version string, logger *zap.SugaredLogger) error {
+	start := time.Now()
+	err := t.performer.Install(kubeConfig, istioChart, version, logger)
+	elapsed := time.Since(start)
+	logger.Infof("IstioPerformer.Install took: %s", elapsed)
+	return err
+}
+
+func (t *timedPerformer) PatchMutatingWebhook(ctx context.Context, kubeClient kubernetes.Client, logger *zap.SugaredLogger) error {
+	start := time.Now()
+	err := t.performer.PatchMutatingWebhook(ctx, kubeClient, logger)
+	elapsed := time.Since(start)
+	logger.Infof("IstioPerformer.PatchMutatingWebhook took: %s", elapsed)
+	return err
+}
+
+func (t *timedPerformer) Update(kubeConfig, istioChart, targetVersion string, logger *zap.SugaredLogger) error {
+	start := time.Now()
+	err := t.performer.Update(kubeConfig, istioChart, targetVersion, logger)
+	elapsed := time.Since(start)
+	logger.Infof("IstioPerformer.Update took: %s", elapsed)
+	return err
+}
+
+func (t *timedPerformer) ResetProxy(context context.Context, kubeConfig string, proxyImageVersion string, proxyImagePrefix string, logger *zap.SugaredLogger) error {
+	start := time.Now()
+	err := t.performer.ResetProxy(context, kubeConfig, proxyImageVersion, proxyImagePrefix, logger)
+	elapsed := time.Since(start)
+	logger.Infof("IstioPerformer.ResetProxy took: %s", elapsed)
+	return err
+}
+
+func (t *timedPerformer) Version(workspace chart.Factory, branchVersion string, istioChart string, kubeConfig string, logger *zap.SugaredLogger) (IstioStatus, error) {
+	start := time.Now()
+	istioStatus, err := t.performer.Version(workspace, branchVersion, istioChart, kubeConfig, logger)
+	elapsed := time.Since(start)
+	logger.Infof("IstioPerformer.Version took: %s", elapsed)
+	return istioStatus, err
+}
+
+func (t *timedPerformer) Uninstall(kubeClientSet kubernetes.Client, version string, logger *zap.SugaredLogger) error {
+	start := time.Now()
+	err := t.performer.Uninstall(kubeClientSet, version, logger)
+	elapsed := time.Since(start)
+	logger.Infof("IstioPerformer.Uninstall took: %s", elapsed)
+	return err
+}
